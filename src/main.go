@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
 	"os"
@@ -68,31 +69,31 @@ func loginWallet(acc accounts.Account, keystore *myKeystore, storage *storageKey
 	}
 	h_pass := getHash(pass)
 	i := 0
-	for i = 0; (h_pass) != h_true_pass && i < 5; i++ {
+	for i = 0; (h_pass) != h_true_pass && i < 4; i++ {
+		fmt.Printf("Wrong answer %d try out of 5, password incorect, please, try again:\n", i+1)
 		pass, err = reader.ReadString('\n')
 		h_pass = getHash(pass)
 		if err != nil {
 			return err
 		}
 	}
-	if i == 5 {
-		fmt.Println("You have exceeded the number of attempts")
+	if i == 4 {
+		return errors.New("You have exceeded the number of attempts")
 	} else {
-		fmt.Println("yes, is your pass")
 		err = keystore.loginAccount(acc, h_pass+pass)
 		if err != nil {
-			fmt.Println("some error: ", err)
+			return err
 		} else {
-			fmt.Println("thats ok")
+			fmt.Println(acc.Address, "was unlocked for test")
 		}
 	}
 	return nil
 }
 
 func main() {
-	path_pr_keys := "./wallets_keys/"
-	password_path := "./pass/key.txt"
-	hardcored_key_path := "./hardcored_key"
+	path_pr_keys := "./src/wallets_keys/"
+	password_path := "./src/pass/key.txt"
+	hardcored_key_path := "./src/hardcored_key"
 
 	var storage storageKey
 	var keyStore myKeystore
@@ -100,17 +101,32 @@ func main() {
 	keyStore.Init(path_pr_keys)
 	err := storage.Init(password_path, hardcored_key_path)
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	defer storage.Close()
 
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	if keyStore.isAccountExist() {
 		acc := keyStore.getAccount()
 		err = loginWallet(*acc, &keyStore, &storage)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if keyStore.testCanWeMakeSign() {
+			fmt.Println("we can make sign")
+		} else {
+			fmt.Println("we can't make sign")
+		}
 	} else {
 		err = makeNewWallet(&keyStore, &storage)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	}
 }

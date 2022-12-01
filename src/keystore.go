@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
@@ -36,7 +35,6 @@ func (it *myKeystore) createAccount(password string) (*accounts.Account, error) 
 	if err != nil {
 		return nil, err
 	}
-	it.ks.Lock(acc.Address)
 	return &acc, nil
 }
 
@@ -46,11 +44,13 @@ func (it *myKeystore) loginAccount(acc accounts.Account, password string) error 
 	return err
 }
 
-func (it *myKeystore) testUnlock() {
+//if we have private key we unlock this account and can sign any hash
+func (it *myKeystore) testCanWeMakeSign() bool {
 	acc := it.getAccount()
-	byte, err := it.ks.SignHash(*acc, []byte("JftTmWtFb8fUvr6bR4xneJYaLcynX52s"))
+	someHash := []byte("JftTmWtFb8fUvr6bR4xneJYaLcynX52s")
+	_, err := it.ks.SignHash(*acc, someHash)
 	if err != nil {
-		fmt.Println("somebad", err.Error())
+		return false
 	}
-	fmt.Println("we can sign ", byte)
+	return true
 }

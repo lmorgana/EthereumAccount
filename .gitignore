@@ -1,3 +1,2 @@
-hardcored_key
-wallets_keys/*
-pass/*
+wallets_keys/*.*
+pass/*.*
